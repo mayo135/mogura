@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>土に還る（簡易プロトタイプ）</title>
+<style>
+    body { background-color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: white; font-family: sans-serif; }
+    #game-container { position: relative; width: 400px; height: 600px; background-color: #8b4513; overflow: hidden; border: 4px solid #5d2e0a; }
+    #mole { position: absolute; width: 40px; height: 40px; background-color: #a52a2a; border-radius: 50%; top: 50px; left: 180px; transition: all 0.1s; z-index: 10; }
+    #mole::after { content: '👀'; position: absolute; top: 5px; left: 5px; font-size: 20px; }
+    .dirt { position: absolute; width: 40px; height: 40px; background-color: #654321; border: 1px solid #5d2e0a; box-sizing: border-box; }
+    #goal { position: absolute; bottom: 0; width: 100%; height: 60px; background: linear-gradient(to bottom, #8b4513, #fffacd); display: flex; justify-content: center; align-items: center; color: #5d2e0a; font-weight: bold; font-size: 24px; z-index: 5; }
+    #ui { position: absolute; top: 10px; left: 10px; color: white; text-shadow: 1px 1px 2px black; z-index: 100; }
+</style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="ui">深さ: <span id="depth">0</span>m</div>
+    <div id="mole"></div>
+    <div id="goal">天国</div>
+</div>
+
+<script>
+    const container = document.getElementById('game-container');
+    const mole = document.getElementById('mole');
+    const depthSpan = document.getElementById('depth');
+    const containerWidth = 400;
+    const containerHeight = 600;
+    const cellSize = 40;
+    const rows = containerHeight / cellSize;
+    const cols = containerWidth / cellSize;
+
+    let molePos = { x: 4, y: 1 }; // グリッド座標
+    let depth = 0;
+
+    // 土を敷き詰める
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            // モグラの初期位置とゴール地点には土を置かない
+            if ((r === molePos.y && c === molePos.x) || r >= rows - 1) continue;
+            const dirt = document.createElement('div');
+            dirt.classList.add('dirt');
+            dirt.style.left = c * cellSize + 'px';
+            dirt.style.top = r * cellSize + 'px';
+            dirt.id = `dirt-${r}-${c}`;
+            container.appendChild(dirt);
+        }
+    }
+
+    // モグラの位置を更新
+    function updateMolePosition() {
+        mole.style.left = molePos.x * cellSize + 'px';
+        mole.style.top = molePos.y * cellSize + 'px';
+        depth = Math.max(0, (molePos.y - 1) * 10);
+        depthSpan.innerText = depth;
+
+        // ゴール判定
+        if (molePos.y >= rows - 1) {
+            alert('天国にたどり着きました！土に還ります。');
+            resetGame();
+        }
+    }
+
+    // 土を掘る
+    function digDirt(r, c) {
+        const dirt = document.getElementById(`dirt-${r}-${c}`);
+        if (dirt) {
+            dirt.remove();
+        }
+    }
+
+    // ゲームリセット
+    function resetGame() {
+        location.reload();
+    }
+
+    // キーボード操作
+    document.addEventListener('keydown', (e) => {
+        let nextX = molePos.x;
+        let nextY = molePos.y;
+
+        switch (e.key) {
+            case 'ArrowUp': nextY--; break;
+            case 'ArrowDown': nextY++; break;
+            case 'ArrowLeft': nextX--; break;
+            case 'ArrowRight': nextX++; break;
+            default: return;
+        }
+
+        // 画面外には行かない
+        if (nextX >= 0 && nextX < cols && nextY >= 0 && nextY < rows) {
+            molePos.x = nextX;
+            molePos.y = nextY;
+            digDirt(molePos.y, molePos.x); // 移動した先の土を掘る
+            updateMolePosition();
+        }
+    
+    });
+
+    updateMolePosition(); // 初期位置を設定
+</script>
+
+</body>
+</html>
